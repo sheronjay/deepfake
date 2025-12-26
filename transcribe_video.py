@@ -11,10 +11,29 @@ def transcribe_audio(audio_path: Path, model_name: str) -> str:
 
     print("Transcribing audio...")
     result = model.transcribe(str(audio_path))
-    return result["text"]
+    transcribe = result["text"]
+    
+    # Ensure stt_txt folder exists
+    stt_folder = Path("stt_txt")
+    stt_folder.mkdir(exist_ok=True)
+    
+    # Save transcription in stt_txt folder
+    output_file = stt_folder / f"{audio_path.stem}_{model_name}.txt"
+    with open(output_file, 'w') as f:
+        f.write(transcribe)
+    print(f"Transcription completed and saved to {output_file}")
+
+    return output_file
 
 def convert_to_audio(video_path: Path, audio_path: Path) -> Path:
     print("Converting video to audio...")
+    # Ensure audios folder exists
+    audios_folder = Path("audios")
+    audios_folder.mkdir(exist_ok=True)
+    
+    # Save audio in audios folder
+    audio_path = audios_folder / audio_path.name
+    
     command = "ffmpeg -i {} -vn -ar 44100 -ac 2 -b:a 192k {}".format(video_path, audio_path)
     subprocess.run(command, shell=True)
     return audio_path
@@ -36,14 +55,10 @@ def main():
         print(f"Error: The file {video_file} does not exist.")
         sys.exit(1)
 
-    # audio_path = convert_to_audio(video_file, video_file.with_suffix('.mp3')) #comment this if the audio is already extracted
-    audio_path = video_file.with_suffix('.mp3') #comment this if the audio is not already extracted
+    audio_path = convert_to_audio(video_file, video_file.with_suffix('.mp3')) #comment this if the audio is already extracted
+    # audio_path = video_file.with_suffix('.mp3') #comment this if the audio is not already extracted
 
     transcribe = transcribe_audio(audio_path, model_name)
-
-    with open(video_file.stem + "_" + model_name + ".txt", 'w') as f:
-        f.write(transcribe)
-    print("Transcription completed and saved.")
 
 
 if __name__ == "__main__":
