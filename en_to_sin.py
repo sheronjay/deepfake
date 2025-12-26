@@ -33,7 +33,7 @@ def split_to_sentences(text: str, max_length: int = 300):
     
     return final_sentences
 
-def translate_file(input_file: Path, output_file: Path):
+def translate_file(input_file: Path):
 
     print(f"[INFO] Reading: {input_file}")
     with open(input_file, 'r', encoding='utf-8') as f:
@@ -48,8 +48,15 @@ def translate_file(input_file: Path, output_file: Path):
         translated = translator(sentence, max_length=512)
         translated_sentences.append(translated[0]['translation_text'])
 
+    # Ensure translated_txt folder exists
+    translated_txt = Path("translated_txt")
+    translated_txt.mkdir(exist_ok=True)
+
+    output_file = translated_txt / f"{input_file.stem}_translated.txt"
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write('\n'.join(translated_sentences))
+
+    return output_file
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -57,10 +64,10 @@ if __name__ == "__main__":
         sys.exit(1)
 
     input_file = Path(sys.argv[1])
-    output_file = input_file.stem + "_translated.txt"
+    
 
     if not input_file.exists():
         print(f"Error: The file {input_file} does not exist.")
         sys.exit(1)
 
-    translate_file(input_file, output_file)
+    translated_path = translate_file(input_file)
