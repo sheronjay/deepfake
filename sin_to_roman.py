@@ -2,6 +2,7 @@ import sys
 import os
 from pathlib import Path
 from aksharamukha import transliterate
+import json
 
 def romanize(input_path, scheme="ISO"):
     # source script name: "Sinhala"
@@ -13,18 +14,25 @@ def romanize(input_path, scheme="ISO"):
     
     # Read input file
     with open(input_path, "r", encoding="utf-8") as f:
-        content = f.read()
+        segments = json.load(f)
     
     # Transliterate
-    romanized_text = transliterate.process("Sinhala", scheme, content)
-    
+    romanized_segments = []
+    for segment in segments:
+        romanized_text = transliterate.process("Sinhala", scheme, segment['text'])
+        romanized_segments.append({
+            "start": segment['start'],
+            "end": segment['end'],
+            "text": romanized_text
+        })
+
     # Generate output filename
-    output_filename = Path(input_path).stem + "_romanized.txt"
+    output_filename = Path(input_path).stem + "_romanized.json"
     output_path = roman_folder / output_filename
     
     # Save to file
     with open(output_path, "w", encoding="utf-8") as f:
-        f.write(romanized_text)
+        json.dump(romanized_segments, f, ensure_ascii=False, indent=2)
     
     return output_path
 
