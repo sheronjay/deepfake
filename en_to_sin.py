@@ -1,4 +1,5 @@
 import sys
+import json
 from pathlib import Path
 import textwrap
 from transformers import pipeline, AutoModelForSeq2SeqLM, AutoTokenizer
@@ -7,8 +8,6 @@ MODEL_NAME = "facebook/nllb-200-distilled-600M"
 
 TGT_LANG = "sin_Sinh"
 SRC_LANG = "eng_Latn"
-
-translated_sentences = []
 
 def load_translator(model_name: str, src_lang: str, tgt_lang: str):
 
@@ -36,27 +35,39 @@ def split_to_sentences(text: str, max_length: int = 300):
 def translate_file(input_file: Path):
 
     print(f"[INFO] Reading: {input_file}")
+    
     with open(input_file, 'r', encoding='utf-8') as f:
-        text = f.read()
-
-    sentences = split_to_sentences(text, max_length=300)
-
+        segments = json.load(f)
+    
     translator = load_translator(MODEL_NAME, SRC_LANG, TGT_LANG)
-
-    print(f"[INFO] Translating and writing")
-    for sentence in sentences:
-        translated = translator(sentence, max_length=512)
-        translated_sentences.append(translated[0]['translation_text'])
-
+    
+    print(f"[INFO] Translating {len(segments)} segments")
+    translated_segments = []
+    
+    for i, segment in enumerate(segments):
+        print(f"[INFO] Translating segment {i+1}/{len(segments)}")
+        original_text = segment['text']
+        translated = translator(original_text, max_length=512)
+        
+        # Create new segment with translated text
+        translated_segment = {
+            "start": segment['start'],
+            "end": segment['end'],
+            "text": translated[0]['translation_text']
+        }
+        translated_segments.append(translated_segment)
+    
     # Ensure translated_txt folder exists
     translated_txt = Path("translated_txt")
     translated_txt.mkdir(exist_ok=True)
-
-    output_file = translated_txt / f"{input_file.stem}_translated.txt"
+    
+    output_file = translated_txt / f"{input_file.stem}_translated.json"
     with open(output_file, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(translated_sentences))
-
+        json.dump(translated_segments, f, ensure_ascii=False, indent=2)
+    
+    print(f"[INFO] Saved translated JSON to: {output_file}")
     return output_file
+    
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
