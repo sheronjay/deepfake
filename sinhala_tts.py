@@ -27,18 +27,18 @@ def sinhala_audio(romanized_path):
     audios_folder = Path("sinhala_audio")
     audios_folder.mkdir(exist_ok=True)
 
-    output_filename = Path(romanized_path).stem + "_sinhala_tts"
+    output_filename = Path(romanized_path).stem + "_sinhala_tts.wav"
     output_path = audios_folder / output_filename
 
     # Generate audio
     tts.tts_to_file(
         text=text,
-        file_path=output_path
+        file_path=str(output_path)
     )
 
     print(f"Audio generated and saved as: {output_path}")
 
-    return output_path + '.wav'
+    return output_path
 
 def main():
     if len(sys.argv) != 2:
