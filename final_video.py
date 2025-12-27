@@ -19,3 +19,4 @@ def join_video_audio(video_path, audio_path):
     ]
 
     subprocess.run(command, check=True)
+    return output_path
