@@ -1,29 +1,56 @@
 import sys
 from pathlib import Path
-import whisper
+import whisper_timestamped as whisper_ts
 import subprocess
+import json
 
 model_names = ["tiny.en", "base.en", "small.en", "medium.en", "tiny", "base", "small", "medium", "large", "turbo"]
 
-def transcribe_audio(audio_path: Path, model_name: str) -> str:
+def transcribe_audio(audio_path: Path, model_name: str) -> Path:
     print("Loading model...")
-    model = whisper.load_model(model_name)
+    model = whisper_ts.load_model(model_name)
 
-    print("Transcribing audio...")
-    result = model.transcribe(str(audio_path))
-    transcribe = result["text"]
-    
-    # Ensure stt_txt folder exists
+    print("Transcribing audio (sentence-level timestamps)...")
+    result = whisper_ts.transcribe(
+        model,
+        str(audio_path),
+        language="en",
+        vad=True,                 # improves segment boundaries
+        detect_disfluencies=False
+    )
+
+    # Ensure output folder exists
     stt_folder = Path("stt_txt")
     stt_folder.mkdir(exist_ok=True)
-    
-    # Save transcription in stt_txt folder
-    output_file = stt_folder / f"{audio_path.stem}_{model_name}.txt"
-    with open(output_file, 'w') as f:
-        f.write(transcribe)
-    print(f"Transcription completed and saved to {output_file}")
 
-    return output_file
+    base = stt_folder / f"{audio_path.stem}_{model_name}"
+
+    # 1) Save full transcript text
+    text_file = base.with_suffix(".txt")
+    with open(text_file, "w", encoding="utf-8") as f:
+        full_text = " ".join(seg["text"].strip() for seg in result["segments"])
+        f.write(full_text)
+
+    # 2) Save sentence-level segments (this is what you’ll use for dubbing)
+    segments_file = Path(str(base) + "_segments.json")
+    segments = []
+
+    for seg in result["segments"]:
+        segments.append({
+            "start": float(seg["start"]),
+            "end": float(seg["end"]),
+            "text": seg["text"].strip()
+        })
+
+    with open(segments_file, "w", encoding="utf-8") as f:
+        json.dump(segments, f, indent=2, ensure_ascii=False)
+
+    print(f"Saved:")
+    print(f" - Transcript: {text_file}")
+    print(f" - Segments:   {segments_file}")
+
+    # Return segment JSON (perfect input for translate → TTS → ffmpeg)
+    return segments_file
 
 def convert_to_audio(video_path: Path, audio_path: Path) -> Path:
     print("Converting video to audio...")
