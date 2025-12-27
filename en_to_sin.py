@@ -43,7 +43,7 @@ def translate_file(input_file: Path):
 
     translator = load_translator(MODEL_NAME, SRC_LANG, TGT_LANG)
 
-    print(f"[INFO] Translating and writing to: {output_file}")
+    print(f"[INFO] Translating and writing")
     for sentence in sentences:
         translated = translator(sentence, max_length=512)
         translated_sentences.append(translated[0]['translation_text'])
