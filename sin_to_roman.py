@@ -14,13 +14,13 @@ def romanize(input_path, scheme="ISO"):
     
 
     for segment in segments:
-        segment['roman'] = transliterate.process("Sinhala", scheme, segment['text'])
+        segment['roman'] = transliterate.process("Sinhala", scheme, segment['translation'])
     
     # Save to file
-    with open(input_file, "w", encoding="utf-8") as f:
+    with open(input_path, "w", encoding="utf-8") as f:
         json.dump(segments, f, ensure_ascii=False, indent=2)
 
-    return input_file
+    return input_path
 
 def main():
     if len(sys.argv) < 2:
