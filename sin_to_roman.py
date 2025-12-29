@@ -8,33 +8,19 @@ def romanize(input_path, scheme="ISO"):
     # source script name: "Sinhala"
     # target romanization: "ISO" / "IAST" / "ITRANS" / "Roman (Colloquial)" etc.
     
-    # Create roman_txt folder if it doesn't exist
-    roman_folder = Path("roman_txt")
-    roman_folder.mkdir(exist_ok=True)
-    
     # Read input file
     with open(input_path, "r", encoding="utf-8") as f:
         segments = json.load(f)
     
-    # Transliterate
-    romanized_segments = []
-    for segment in segments:
-        romanized_text = transliterate.process("Sinhala", scheme, segment['text'])
-        romanized_segments.append({
-            "start": segment['start'],
-            "end": segment['end'],
-            "text": romanized_text
-        })
 
-    # Generate output filename
-    output_filename = Path(input_path).stem + "_romanized.json"
-    output_path = roman_folder / output_filename
+    for segment in segments:
+        segment['roman'] = transliterate.process("Sinhala", scheme, segment['text'])
     
     # Save to file
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(romanized_segments, f, ensure_ascii=False, indent=2)
-    
-    return output_path
+    with open(input_file, "w", encoding="utf-8") as f:
+        json.dump(segments, f, ensure_ascii=False, indent=2)
+
+    return input_file
 
 def main():
     if len(sys.argv) < 2:
