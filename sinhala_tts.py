@@ -31,7 +31,7 @@ def sinhala_audio(input_file):
 
     audio_segments = []
     for segment in segments:
-        text = segment['text']
+        text = segment['roman']
         output_filename = f"{Path(input_file).stem}_segment_{segment['start']}_{segment['end']}.wav"
         output_path = audios_folder / output_filename
 
