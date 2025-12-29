@@ -21,8 +21,11 @@ def join_segments(json_path: Path):
 
     filter_complex = "; ".join(filters) + ";" + "".join(mix_inputs) + f"amix=inputs={len(segments)}:dropout_transition=0"
 
+    stt_folder = Path("joined_sinhala_audio")
+    stt_folder.mkdir(exist_ok=True)
+
     # Generate output path in the same directory as input
-    output_audio = json_path.parent / f"{json_path.stem}_final_sinhala_audio.m4a"
+    output_audio = stt_folder / f"{json_path.stem}_final_sinhala_audio.m4a"
 
     cmd = f"""
     ffmpeg -y {' '.join(inputs)} \
