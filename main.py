@@ -28,7 +28,7 @@ def main():
 
     # Convert video to audio
     print("Converting video to audio...")
-    audio_path = convert_to_audio(video_path, video_path.with_suffix('.mp3'))
+    audio_path = convert_to_audio(video_path)
     print(f"Audio Path: {audio_path}")
 
     # Generate speech-to-text transcription

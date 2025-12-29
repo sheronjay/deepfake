@@ -45,16 +45,19 @@ def transcribe_audio(audio_path: Path, model_name: str = "medium.en") -> Path:
     # Return segment JSON (perfect input for translate → TTS → ffmpeg)
     return segments_file
 
-def convert_to_audio(video_path: Path, audio_path: Path) -> Path:
+def convert_to_audio(video_path: Path) -> Path:
     print("Converting video to audio...")
     # Ensure audios folder exists
     audios_folder = Path("audios")
     audios_folder.mkdir(exist_ok=True)
     
     # Save audio in audios folder
-    audio_path = audios_folder / audio_path.name
+    audio_path = audios_folder / (video_path.stem + ".wav")
     
-    command = "ffmpeg -i {} -vn -ar 44100 -ac 2 -b:a 192k {}".format(video_path, audio_path)
+    command = (
+        f'ffmpeg -y -fflags +genpts -i "{video_path}" '
+        f'-vn -ac 1 -ar 16000 -c:a pcm_s16le "{audio_path}"'
+    )
     subprocess.run(command, shell=True)
     return audio_path
 
