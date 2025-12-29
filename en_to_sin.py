@@ -42,32 +42,20 @@ def translate_file(input_file: Path):
     translator = load_translator(MODEL_NAME, SRC_LANG, TGT_LANG)
     
     print(f"[INFO] Translating {len(segments)} segments")
-    translated_segments = []
     
     for i, segment in enumerate(segments):
         print(f"[INFO] Translating segment {i+1}/{len(segments)}")
         original_text = segment['text']
         translated = translator(original_text, max_length=512)
-        
-        # Create new segment with translated text
-        translated_segment = {
-            "start": segment['start'],
-            "end": segment['end'],
-            "text": translated[0]['translation_text']
-        }
-        translated_segments.append(translated_segment)
+        segment["translation"] = translated[0]['translation_text']
     
-    # Ensure translated_txt folder exists
-    translated_txt = Path("translated_txt")
-    translated_txt.mkdir(exist_ok=True)
+    # Save back to the same file
+    with open(input_file, 'w', encoding='utf-8') as f:
+        json.dump(segments, f, ensure_ascii=False, indent=2)
     
-    output_file = translated_txt / f"{input_file.stem}_translated.json"
-    with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump(translated_segments, f, ensure_ascii=False, indent=2)
-    
-    print(f"[INFO] Saved translated JSON to: {output_file}")
-    return output_file
-    
+    print(f"[INFO] Updated translations in: {input_file}")
+    return input_file
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
