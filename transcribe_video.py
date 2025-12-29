@@ -6,7 +6,7 @@ import json
 
 model_names = ["tiny.en", "base.en", "small.en", "medium.en", "tiny", "base", "small", "medium", "large", "turbo"]
 
-def transcribe_audio(audio_path: Path, model_name: str) -> Path:
+def transcribe_audio(audio_path: Path, model_name: str = "medium.en") -> Path:
     print("Loading model...")
     model = whisper_ts.load_model(model_name)
 
@@ -20,26 +20,21 @@ def transcribe_audio(audio_path: Path, model_name: str) -> Path:
     )
 
     # Ensure output folder exists
-    stt_folder = Path("stt_txt")
+    stt_folder = Path("segment_metadata")
     stt_folder.mkdir(exist_ok=True)
 
-    base = stt_folder / f"{audio_path.stem}_{model_name}"
+    segments_file = stt_folder / "segment_metadata.json"
 
-    # 1) Save full transcript text
-    text_file = base.with_suffix(".txt")
-    with open(text_file, "w", encoding="utf-8") as f:
-        full_text = " ".join(seg["text"].strip() for seg in result["segments"])
-        f.write(full_text)
-
-    # 2) Save sentence-level segments (this is what you’ll use for dubbing)
-    segments_file = Path(str(base) + "_segments.json")
     segments = []
 
     for seg in result["segments"]:
         segments.append({
             "start": float(seg["start"]),
             "end": float(seg["end"]),
-            "text": seg["text"].strip()
+            "text": seg["text"].strip(),
+            "translation": "",
+            "roman": "",
+            "audio": "",
         })
 
     with open(segments_file, "w", encoding="utf-8") as f:
