@@ -37,7 +37,8 @@ def sinhala_audio(input_file):
 
         tts.tts_to_file(
         text=text,
-        file_path=str(output_path)
+        file_path=str(output_path),
+        length_scale=0.85 
         )
 
         segment['audio'] = str(output_path)
