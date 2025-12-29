@@ -10,7 +10,7 @@ CONFIG_PATH = "tts_model/config.json"
 OUTPUT_WAV = "output.wav"
 # ----------------
 
-def sinhala_audio(romanized_path):
+def sinhala_audio(input_file):
     # Load TTS model
     tts = TTS(
         model_path=MODEL_PATH,
@@ -20,19 +20,19 @@ def sinhala_audio(romanized_path):
 
     # Read romanized text
     try:
-        with open(romanized_path, "r", encoding="utf-8") as f:
+        with open(input_file, "r", encoding="utf-8") as f:
             segments = json.load(f)
     except Exception as e:
         print("Error reading romanized text file:", e)
         sys.exit(1)
 
-    audios_folder = Path("sinhala_audio")
+    audios_folder = Path("sinhala_audio_segments")
     audios_folder.mkdir(exist_ok=True)
 
     audio_segments = []
     for segment in segments:
         text = segment['text']
-        output_filename = f"{Path(romanized_path).stem}_segment_{segment['start']}_{segment['end']}.wav"
+        output_filename = f"{Path(input_file).stem}_segment_{segment['start']}_{segment['end']}.wav"
         output_path = audios_folder / output_filename
 
         tts.tts_to_file(
@@ -40,19 +40,12 @@ def sinhala_audio(romanized_path):
         file_path=str(output_path)
         )
 
-        audio_segments.append({
-            "start": segment['start'],
-            "end": segment['end'],
-            "audio": str(output_path)
-        })
+        segment['audio'] = str(output_path)
 
-    # Save audio segments metadata
-    metadata_filename = Path(romanized_path).stem + "_sinhala_tts_metadata.json"
-    metadata_filepath = audios_folder / metadata_filename
-    with open(metadata_filepath, "w", encoding="utf-8") as f:
-        json.dump(audio_segments, f, ensure_ascii=False, indent=2)
+    with open(input_file, "w", encoding="utf-8") as f:
+        json.dump(segments, f, ensure_ascii=False, indent=2)
 
-    return metadata_filepath
+    return input_file
 
 def main():
     if len(sys.argv) != 2:
