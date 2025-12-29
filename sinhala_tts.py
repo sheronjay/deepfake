@@ -44,7 +44,7 @@ def sinhala_audio(input_file):
         tts.tts_to_file(
         text=text,
         file_path=str(output_path),
-        length_scale=0.75 
+        split_sentences=False,
         )
 
         with sf.SoundFile(output_path) as f:
