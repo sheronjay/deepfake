@@ -41,10 +41,13 @@ def transcribe_audio(audio_path: Path, model_name: str = "medium.en") -> Path:
         segments.append({
             "start": float(seg["start"]),
             "end": float(seg["end"]),
+            "target_duration": float(seg["end"] - seg["start"]),
             "text": seg["text"].strip(),
             "translation": "",
             "roman": "",
             "audio": "",
+            "tts_duration": "",
+            "duration_ratio": "",
         })
 
     segments_file.write_text(json.dumps(segments, indent=2, ensure_ascii=False), encoding="utf-8")
