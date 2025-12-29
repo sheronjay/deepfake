@@ -2,7 +2,8 @@ import json
 import subprocess
 from pathlib import Path
 
-def join_segments(json_path: Path, output_audio: Path):
+def join_segments(json_path: Path):
+
     with open(json_path, "r") as f:
         segments = json.load(f)
 
@@ -20,6 +21,9 @@ def join_segments(json_path: Path, output_audio: Path):
 
     filter_complex = "; ".join(filters) + ";" + "".join(mix_inputs) + f"amix=inputs={len(segments)}:dropout_transition=0"
 
+    # Generate output path in the same directory as input
+    output_audio = json_path.parent / f"{json_path.stem}_final_sinhala_audio.m4a"
+
     cmd = f"""
     ffmpeg -y {' '.join(inputs)} \
     -filter_complex "{filter_complex}" \
@@ -27,9 +31,6 @@ def join_segments(json_path: Path, output_audio: Path):
     """
 
     subprocess.run(cmd, shell=True)
+    
+    return output_audio
 
-
-jsonfile = Path("sinhala_audio") / "abella-danger-interview_medium.en_segments_translated_romanized_sinhala_tts_metadata.json"
-outputfile = Path("sinhala_audio") / "abella-danger-interview_sinhala_full.m4a"
-
-join_segments(jsonfile, outputfile)
