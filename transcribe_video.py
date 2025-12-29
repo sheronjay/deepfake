@@ -41,8 +41,6 @@ def transcribe_audio(audio_path: Path, model_name: str = "medium.en") -> Path:
         json.dump(segments, f, indent=2, ensure_ascii=False)
 
     print(f"Saved:")
-    print(f" - Transcript: {text_file}")
-    print(f" - Segments:   {segments_file}")
 
     # Return segment JSON (perfect input for translate → TTS → ffmpeg)
     return segments_file
