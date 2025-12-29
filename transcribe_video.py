@@ -1,33 +1,43 @@
 import sys
 from pathlib import Path
-import whisper_timestamped as whisper_ts
 import subprocess
 import json
+import whisperx
 
 model_names = ["tiny.en", "base.en", "small.en", "medium.en", "tiny", "base", "small", "medium", "large", "turbo"]
 
 def transcribe_audio(audio_path: Path, model_name: str = "medium.en") -> Path:
-    print("Loading model...")
-    model = whisper_ts.load_model(model_name)
+    device = "cpu"
+    compute_type = "int8"   # fastest/most stable on CPU
 
-    print("Transcribing audio (sentence-level timestamps)...")
-    result = whisper_ts.transcribe(
-        model,
-        str(audio_path),
-        language="en",
-        vad=True,                 # improves segment boundaries
-        detect_disfluencies=False
+    print(f"Loading WhisperX model '{model_name}' on CPU ({compute_type})...")
+    model = whisperx.load_model(model_name, device=device, compute_type=compute_type,  vad_method="silero")
+
+    print("Loading audio...")
+    audio = whisperx.load_audio(str(audio_path))
+
+    print("Transcribing (rough segments)...")
+    result = model.transcribe(audio, language="en")
+
+    print("Loading alignment model...")
+    align_model, align_metadata = whisperx.load_align_model(language_code="en", device=device)
+
+    print("Aligning (refining timestamps)...")
+    aligned = whisperx.align(
+        result["segments"],
+        align_model,
+        align_metadata,
+        audio,
+        device=device,
+        return_char_alignments=False
     )
 
-    # Ensure output folder exists
-    stt_folder = Path("segment_metadata")
-    stt_folder.mkdir(exist_ok=True)
-
-    segments_file = stt_folder / "segment_metadata.json"
+    out_dir = Path("segment_metadata")
+    out_dir.mkdir(exist_ok=True)
+    segments_file = out_dir / "segment_metadata.json"
 
     segments = []
-
-    for seg in result["segments"]:
+    for seg in aligned["segments"]:
         segments.append({
             "start": float(seg["start"]),
             "end": float(seg["end"]),
@@ -37,12 +47,8 @@ def transcribe_audio(audio_path: Path, model_name: str = "medium.en") -> Path:
             "audio": "",
         })
 
-    with open(segments_file, "w", encoding="utf-8") as f:
-        json.dump(segments, f, indent=2, ensure_ascii=False)
-
-    print(f"Saved:")
-
-    # Return segment JSON (perfect input for translate → TTS → ffmpeg)
+    segments_file.write_text(json.dumps(segments, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"Saved: {segments_file}")
     return segments_file
 
 def convert_to_audio(video_path: Path) -> Path:
