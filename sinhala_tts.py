@@ -1,7 +1,9 @@
 import sys
 import json
+import soundfile as sf
 from pathlib import Path
 from TTS.api import TTS
+
 
 
 # ---- CONFIG ----
@@ -9,6 +11,10 @@ MODEL_PATH = "tts_model/checkpoint_80000.pth"
 CONFIG_PATH = "tts_model/config.json"
 OUTPUT_WAV = "output.wav"
 # ----------------
+
+def get_wav_duration(wav_file):
+    with sf.SoundFile(wav_file) as f:
+        return len(f) / f.samplerate
 
 def sinhala_audio(input_file):
     # Load TTS model
@@ -38,10 +44,15 @@ def sinhala_audio(input_file):
         tts.tts_to_file(
         text=text,
         file_path=str(output_path),
-        length_scale=0.85 
+        length_scale=0.75 
         )
 
+        with sf.SoundFile(output_path) as f:
+            tts_duration = len(f) / f.samplerate
+
         segment['audio'] = str(output_path)
+        segment['tts_duration'] = tts_duration
+        segment['duration_ratio'] = tts_duration / segment['target_duration'] if segment['target_duration'] > 0 else 0
 
     with open(input_file, "w", encoding="utf-8") as f:
         json.dump(segments, f, ensure_ascii=False, indent=2)
