@@ -11,3 +11,5 @@ __pycache__
 joined_sinhala_audio
 segment_metadata
 sinhala_audio_segments
+vc_model/train_data
+vc_model/audio
