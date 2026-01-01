@@ -1,6 +1,7 @@
 import os
 import sys
 import logging
+from pathlib import Path
 
 # Add the project root to the path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 def convert_voice_folder(
     input_folder_path,
     model_name="mahindasiri_thero_3.pth",
-    output_folder_name="converted_audio",
+    output_folder_name="voice_converted_sinhala_audio_segments",
     f0_up_key=0,
     f0_method="rmvpe",
     index_rate=0.75,
@@ -46,22 +47,24 @@ def convert_voice_folder(
     Returns:
         str: Path to the created output folder containing converted audio files
     """
-    # Create output folder inside the input folder
-    output_folder_path = os.path.join(input_folder_path, output_folder_name)
+    # Create output folder
+    output_folder_path = Path(output_folder_name)
+    output_folder_path.mkdir(exist_ok=True)
     
     # Check if output folder already exists and has files
-    if os.path.exists(output_folder_path) and os.listdir(output_folder_path):
+    if output_folder_path.exists() and any(output_folder_path.iterdir()):
         logger.warning(f"Output folder already exists with files: {output_folder_path}")
         user_input = input("Delete existing files and continue? (y/n): ").strip().lower()
         if user_input == 'y':
             import shutil
             shutil.rmtree(output_folder_path)
             logger.info(f"Deleted existing output folder")
+            output_folder_path.mkdir(exist_ok=True)
         else:
             logger.info(f"Using existing output folder")
             return output_folder_path
     
-    os.makedirs(output_folder_path, exist_ok=True)
+    
     
     logger.info(f"Output folder created: {output_folder_path}")
     
@@ -80,16 +83,10 @@ def convert_voice_folder(
     # Load the model
     logger.info(f"Loading model: {model_name}")
     vc.get_vc(model_name)
-    
-    # Construct index file path
-    index_name = model_name.replace(".pth", "")
-    file_index = os.path.join(
-        project_root,
-        "assets",
-        "indices",
-        f"added_IVF2575_Flat_nprobe_1_{index_name}_v1.index"
-    )
-    
+
+    # Index file path
+    file_index = "assets/indices/added_IVF2575_Flat_nprobe_1_mahindasiri_thero_3_v1.index"
+
     if not os.path.exists(file_index):
         logger.warning(f"Index file not found: {file_index}")
         file_index = ""
@@ -99,7 +96,7 @@ def convert_voice_folder(
     for result in vc.vc_multi(
         sid=0,
         dir_path=input_folder_path,
-        opt_root=output_folder_path,
+        opt_root=str(output_folder_path),
         paths=[],
         f0_up_key=f0_up_key,
         f0_method=f0_method,
@@ -128,7 +125,7 @@ if __name__ == "__main__":
     output_path = convert_voice_folder(
         input_folder_path=input_folder,
         model_name="mahindasiri_thero_3.pth",
-        output_folder_name="converted_audio",
+        output_folder_name="voice_converted_sinhala_audio_segments",
         f0_up_key=0,  # No pitch change
         f0_method="rmvpe",  # or 'harvest', 'pm', 'crepe'
         index_rate=0.75,
