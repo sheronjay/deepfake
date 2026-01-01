@@ -57,7 +57,7 @@ def sinhala_audio(input_file):
     with open(input_file, "w", encoding="utf-8") as f:
         json.dump(segments, f, ensure_ascii=False, indent=2)
 
-    return input_file
+    return input_file, audios_folder
 
 def main():
     if len(sys.argv) != 2:
