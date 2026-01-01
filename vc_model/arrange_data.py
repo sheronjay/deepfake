@@ -26,7 +26,7 @@ from scipy.signal import resample_poly
 # =======================
 # CONFIG (CONSTANTS)
 # =======================
-INPUT_WAV = ["life_is_suffering__buddhism_in_english.wav", "should_all_buddhists_meditate__buddhism_in_english.wav", "what_does_it_mean_to_be_happy_in_life__buddhism_in_english.wav", "why_do_bad_things_happen_to_good_people__buddhism_in_english.wav", "this_is_why_people_fail_to_achieve_the_goals__buddhism_in_english.wav", "learn_to_be_alone__buddhism_in_english.wav"]
+INPUT_WAV = ["mahindasiri_thero_sinhala.wav"]
 OUTPUT_DIR = "train_data"
 FILENAME_PREFIX = "mahindasiri_thero"
 
