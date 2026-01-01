@@ -7,6 +7,7 @@ from sin_to_roman import romanize
 from sinhala_tts import sinhala_audio
 from final_video import join_video_audio
 from join_audio_segments import join_segments
+from convert_voice import convert_voice_folder
 
 def get_input() -> tuple[Path, str]:
     if len(sys.argv) < 1:
@@ -48,12 +49,27 @@ def main():
 
     # Generate sinhala audio using tts model
     print("Generating Sinhala audio...")
-    sinhala_wav_segments = sinhala_audio(romanized_path)
+    sinhala_wav_segments, sinhala_audio_folder = sinhala_audio(romanized_path)
     print(f"Sinhala Audio Path: {sinhala_wav_segments}")
+
+    # Convert voice of Sinhala audio segments
+    voice_converted_audio_folder = convert_voice_folder(
+        input_folder_path=sinhala_audio_folder,
+        model_name="mahindasiri_thero_3.pth",
+        output_folder_name="voice_converted_sinhala_audio_segments",
+        f0_up_key=0,
+        f0_method="rmvpe",
+        index_rate=0.75,
+        filter_radius=3,
+        resample_sr=0,
+        rms_mix_rate=0.25,
+        protect=0.33,
+        output_format="wav",
+    )
 
     # Join audio segments
     print("Joining audio segments...")
-    sinhala_m4a = join_segments(sinhala_wav_segments)
+    sinhala_m4a = join_segments(voice_converted_audio_folder)
 
     # Join the original video with the new Sinhala audio
     print("Joining original video with Sinhala audio...")
