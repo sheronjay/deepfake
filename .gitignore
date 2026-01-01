@@ -12,4 +12,8 @@ joined_sinhala_audio
 segment_metadata
 sinhala_audio_segments
 vc_model/train_data
+vc_model/train_data_mahindasiri_thero_english
 vc_model/audio
+vc_model/Retrieval-based-Voice-Conversion-WebUI
+vc_model/rvc
+assets
