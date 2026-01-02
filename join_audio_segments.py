@@ -11,7 +11,7 @@ def join_segments(json_path: Path, max_speedup: float = 1.25):
     mix_inputs = []
 
     for i, seg in enumerate(segments):
-        audio = seg["audio"]
+        audio = seg["converted_audio"]
         start = float(seg["start"])
         delay_ms = int(start * 1000)
 
