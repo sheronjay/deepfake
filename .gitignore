@@ -18,3 +18,5 @@ vc_model/Retrieval-based-Voice-Conversion-WebUI
 vc_model/rvc
 assets
 voice_converted_sinhala_audio_segments
+rvc
+wav2lip
