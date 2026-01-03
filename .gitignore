@@ -20,3 +20,5 @@ assets
 voice_converted_sinhala_audio_segments
 rvc
 wav2lip
+lip-enhancer/venv-lip-enhancer
+lip-enhancer/.python-version
