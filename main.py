@@ -59,14 +59,16 @@ def main():
     convert_script = project_root / "convert_voice.py"
     
     # Run convert_voice.py in the rvc virtual environment
+    # Arguments: <metadata_json> <model_name> [<index_file_name>]
+    # Provide the index file path under assets/indices so the convert script can locate it
+    index_file = project_root / "assets" / "indices" / "added_IVF1281_Flat_nprobe_1_mahindasiri_thero_4_v1.index"
     result = subprocess.run(
         [
             str(rvc_python),
             str(convert_script),
-            sinhala_audio_folder,
-            "mahindasiri_thero_3.pth",
-            "voice_converted_sinhala_audio_segments",
-            str(sinhala_wav_segments),  # Pass metadata JSON path
+            str(sinhala_wav_segments),  # metadata JSON path
+            "mahindasiri_thero_4.pth",  # model name
+            str(index_file),  # index file (optional)
         ],
         capture_output=True,
         text=True,
@@ -89,6 +91,43 @@ def main():
     sinhala_video_path = join_video_audio(video_path, sinhala_m4a)
     print(f"Sinhala Video Path: {sinhala_video_path}")
 
+    # Add lip sync using Wav2Lip
+    print("Adding lip sync...")
+    wav2lip_dir = project_root / "wav2lip" / "Wav2Lip"
+    wav2lip_venv_python = project_root / "wav2lip" / "venv-wav2lip" / "bin" / "python"
+    inference_script = wav2lip_dir / "inference.py"
+    checkpoint_path = wav2lip_dir / "checkpoints" / "wav2lip.pth"
+    
+    # Output path for lip-synced video
+    output_video = sinhala_video_path.parent / f"{sinhala_video_path.stem}_lipsynced.mp4"
+    
+    # Convert paths to absolute paths
+    abs_video_path = sinhala_video_path.resolve()
+    abs_audio_path = sinhala_m4a.resolve()
+    abs_output_path = output_video.resolve()
+    
+    # Run inference.py in the wav2lip virtual environment
+    result = subprocess.run(
+        [
+            str(wav2lip_venv_python),
+            str(inference_script),
+            "--checkpoint_path", str(checkpoint_path),
+            "--face", str(abs_video_path),
+            "--audio", str(abs_audio_path),
+            "--outfile", str(abs_output_path)
+        ],
+        capture_output=True,
+        text=True,
+        cwd=str(wav2lip_dir)
+    )
+    
+    if result.returncode != 0:
+        print(f"Error during lip sync: {result.stderr}")
+        sys.exit(1)
+    
+    print(result.stdout)
+    print(f"Lip-synced Video Path: {output_video}")
+    print("Process completed successfully!")
 
 
 if __name__ == "__main__":
