@@ -20,6 +20,7 @@ def convert_voice_folder(
     model_name="mahindasiri_thero_3.pth",
     output_folder_name="voice_converted_sinhala_audio_segments",
     metadata_json_path=None,
+    index_file=None,
     f0_up_key=0,
     f0_method="rmvpe",
     index_rate=0.75,
@@ -50,26 +51,10 @@ def convert_voice_folder(
     Returns:
         str: Path to the created output folder containing converted audio files
     """
-    # Create output folder inside input folder
-    input_path = Path(input_folder_path)
-    output_folder_path = input_path / output_folder_name
-    output_folder_path.mkdir(exist_ok=True)
-    
-    # Check if output folder already exists and has files
-    if output_folder_path.exists() and any(output_folder_path.iterdir()):
-        logger.warning(f"Output folder already exists with files: {output_folder_path}")
-        user_input = input("Delete existing files and continue? (y/n): ").strip().lower()
-        if user_input == 'y':
-            import shutil
-            shutil.rmtree(output_folder_path)
-            logger.info(f"Deleted existing output folder")
-            output_folder_path.mkdir(exist_ok=True)
-        else:
-            logger.info(f"Using existing output folder")
-            return output_folder_path
-    
-    
-    
+    # Create output folder inside the input folder so converted files live next to inputs
+    input_folder = Path(input_folder_path)
+    output_folder_path = input_folder / output_folder_name
+    output_folder_path.mkdir(parents=True, exist_ok=True)
     logger.info(f"Output folder created: {output_folder_path}")
     
     # Initialize config
@@ -88,12 +73,17 @@ def convert_voice_folder(
     logger.info(f"Loading model: {model_name}")
     vc.get_vc(model_name)
 
-    # Index file path
-    file_index = "assets/indices/added_IVF2575_Flat_nprobe_1_mahindasiri_thero_3_v1.index"
-
-    if not os.path.exists(file_index):
-        logger.warning(f"Index file not found: {file_index}")
-        file_index = ""
+    # Resolve index file path if provided
+    file_index = ""
+    if index_file:
+        # If a relative filename was provided, look under the assets/indices folder
+        possible = Path(index_file)
+        if not possible.exists():
+            possible = Path(project_root) / "assets" / "indices" / index_file
+        if possible.exists():
+            file_index = str(possible)
+        else:
+            logger.warning(f"Index file not found: {index_file}")
     
     # Perform batch voice conversion
     logger.info(f"Converting audio files from: {input_folder_path}")
@@ -151,26 +141,35 @@ def convert_voice_folder(
 if __name__ == "__main__":
     # Parse command-line arguments BEFORE importing Config
     if len(sys.argv) >= 3:
-        input_folder = sys.argv[1]
+        metadata_json = sys.argv[1]
         model_name = sys.argv[2]
-        output_folder_name = sys.argv[3] if len(sys.argv) >= 4 else "voice_converted_sinhala_audio_segments"
-        metadata_json = sys.argv[4] if len(sys.argv) >= 5 else None
+        index_file_name = sys.argv[3] if len(sys.argv) >= 4 else "assets/indices/added_IVF1281_Flat_nprobe_1_mahindasiri_thero_4_v1.index"
         
         # Remove our custom args so Config's argparse doesn't see them
         sys.argv = [sys.argv[0]]
     else:
-        # Default values for testing
-        input_folder = "sinhala_audio_segments"
-        model_name = "mahindasiri_thero_3.pth"
-        output_folder_name = "voice_converted_sinhala_audio_segments"
-        metadata_json = None
+        print("Usage: python convert_voice.py <metadata_json> <model_name> [<index_file_name>]")
+        sys.exit(1)
+    
+    # Load metadata to extract input folder
+    with open(metadata_json, 'r', encoding='utf-8') as f:
+        metadata = json.load(f)
+
+    # Extract the input folder from the first audio file path in metadata
+    if metadata and len(metadata) > 0 and 'audio' in metadata[0]:
+        first_audio_path = Path(metadata[0]['audio'])
+        input_folder = str(first_audio_path.parent)
+    else:
+        logger.error("No audio paths found in metadata file")
+        sys.exit(1)
+    
+    output_folder_name = "voice_converted_sinhala_audio_segments"
     
     logger.info("Starting voice conversion...")
     logger.info(f"Input folder: {input_folder}")
     logger.info(f"Model: {model_name}")
     logger.info(f"Output folder: {output_folder_name}")
-    if metadata_json:
-        logger.info(f"Metadata JSON: {metadata_json}")
+    logger.info(f"Metadata JSON: {metadata_json}")
     
     # Convert all audio files in the folder
     output_path = convert_voice_folder(
@@ -178,6 +177,7 @@ if __name__ == "__main__":
         model_name=model_name,
         output_folder_name=output_folder_name,
         metadata_json_path=metadata_json,
+        index_file=index_file_name,
         f0_up_key=0,  # No pitch change
         f0_method="rmvpe",  # or 'harvest', 'pm', 'crepe'
         index_rate=0.75,
