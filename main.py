@@ -1,6 +1,8 @@
 import sys
 import subprocess
+import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 from transcribe_video import convert_to_audio, transcribe_audio
 from en_to_sin import translate_file
@@ -8,6 +10,9 @@ from sin_to_roman import romanize
 from sinhala_tts import sinhala_audio
 from final_video import join_video_audio
 from join_audio_segments import join_segments
+
+# Load environment variables
+load_dotenv()
 
 def get_input() -> tuple[Path, str]:
     if len(sys.argv) < 1:
@@ -93,8 +98,8 @@ def main():
 
     # Add lip sync using Wav2Lip
     print("Adding lip sync...")
-    wav2lip_dir = project_root / "wav2lip" / "Wav2Lip"
-    wav2lip_venv_python = project_root / "wav2lip" / "venv-wav2lip" / "bin" / "python"
+    wav2lip_dir = Path(os.getenv("wav2lip_path"))
+    wav2lip_venv_path = Path(os.getenv("wav2lip_venv_path"))
     inference_script = wav2lip_dir / "inference.py"
     checkpoint_path = wav2lip_dir / "checkpoints" / "wav2lip.pth"
     
@@ -106,26 +111,27 @@ def main():
     abs_audio_path = sinhala_m4a.resolve()
     abs_output_path = output_video.resolve()
     
-    # Run inference.py in the wav2lip virtual environment
+    # Run inference.py in the wav2lip virtual environment with proper activation
+    # We need to source the venv activate script before running the command
+    wav2lip_command = (
+        f"source {wav2lip_venv_path}/bin/activate && "
+        f"python {inference_script} "
+        f"--checkpoint_path {checkpoint_path} "
+        f"--face {abs_video_path} "
+        f"--audio {abs_audio_path} "
+        f"--outfile {abs_output_path}"
+    )
+    
     result = subprocess.run(
-        [
-            str(wav2lip_venv_python),
-            str(inference_script),
-            "--checkpoint_path", str(checkpoint_path),
-            "--face", str(abs_video_path),
-            "--audio", str(abs_audio_path),
-            "--outfile", str(abs_output_path)
-        ],
-        capture_output=True,
-        text=True,
-        cwd=str(wav2lip_dir)
+        wav2lip_command,
+        shell=True,
+        cwd=str(wav2lip_dir),
+        executable="/bin/bash"
     )
     
     if result.returncode != 0:
-        print(f"Error during lip sync: {result.stderr}")
+        print(f"Error during lip sync. Check output above.")
         sys.exit(1)
-    
-    print(result.stdout)
     print(f"Lip-synced Video Path: {output_video}")
     print("Process completed successfully!")
 
